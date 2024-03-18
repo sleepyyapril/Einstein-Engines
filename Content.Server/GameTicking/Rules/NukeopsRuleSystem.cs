@@ -4,6 +4,7 @@ using Content.Server.GameTicking.Rules.Components;
 using Content.Server.Humanoid;
 using Content.Server.NPC.Components;
 using Content.Server.NPC.Systems;
+using Content.Server.Mind;
 using Content.Server.Nuke;
 using Content.Server.NukeOps;
 using Content.Server.Popups;
@@ -20,6 +21,8 @@ using Content.Shared.Humanoid;
 using Content.Shared.Humanoid.Prototypes;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
+using Content.Shared.NPC.Components;
+using Content.Shared.NPC.Systems;
 using Content.Shared.Nuke;
 using Content.Shared.NukeOps;
 using Content.Shared.Preferences;
@@ -392,9 +395,148 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
         }
     }
 
-    private void SetWinType(Entity<NukeopsRuleComponent> ent, WinType type, bool endRound = true)
+    private void OnRoundStart(EntityUid uid, NukeopsRuleComponent? component = null)
     {
-        ent.Comp.WinType = type;
+        if (!Resolve(uid, ref component))
+            return;
+
+        // TODO: This needs to try and target a Nanotrasen station. At the very least,
+        // we can only currently guarantee that NT stations are the only station to
+        // exist in the base game.
+
+        var eligible = new List<Entity<StationEventEligibleComponent, NpcFactionMemberComponent>>();
+        var eligibleQuery = EntityQueryEnumerator<StationEventEligibleComponent, NpcFactionMemberComponent>();
+        while (eligibleQuery.MoveNext(out var eligibleUid, out var eligibleComp, out var member))
+        {
+            if (!_npcFaction.IsFactionHostile(component.Faction, (eligibleUid, member)))
+                continue;
+
+            eligible.Add((eligibleUid, eligibleComp, member));
+        }
+
+        if (eligible.Count == 0)
+            return;
+
+        component.TargetStation = RobustRandom.Pick(eligible);
+        component.OperationName = _randomMetadata.GetRandomFromSegments([OperationPrefixDataset, OperationSuffixDataset], " ");
+
+        var filter = Filter.Empty();
+        var query = EntityQueryEnumerator<NukeOperativeComponent, ActorComponent>();
+        while (query.MoveNext(out _, out var nukeops, out var actor))
+        {
+            NotifyNukie(actor.PlayerSession, nukeops, component);
+            filter.AddPlayer(actor.PlayerSession);
+        }
+    }
+
+    private void OnRoundEnd(EntityUid uid, NukeopsRuleComponent? component = null)
+    {
+        if (!Resolve(uid, ref component))
+            return;
+
+        // If the win condition was set to operative/crew major win, ignore.
+        if (component.WinType == WinType.OpsMajor || component.WinType == WinType.CrewMajor)
+            return;
+
+        var nukeQuery = AllEntityQuery<NukeComponent, TransformComponent>();
+        var centcomms = _emergency.GetCentcommMaps();
+
+        while (nukeQuery.MoveNext(out var nuke, out var nukeTransform))
+        {
+            if (nuke.Status != NukeStatus.ARMED)
+                continue;
+
+            // UH OH
+            if (nukeTransform.MapUid != null && centcomms.Contains(nukeTransform.MapUid.Value))
+            {
+                component.WinConditions.Add(WinCondition.NukeActiveAtCentCom);
+                SetWinType(uid, WinType.OpsMajor, component);
+                return;
+            }
+
+            if (nukeTransform.GridUid == null || component.TargetStation == null)
+                continue;
+
+            if (!TryComp(component.TargetStation.Value, out StationDataComponent? data))
+                continue;
+
+            foreach (var grid in data.Grids)
+            {
+                if (grid != nukeTransform.GridUid)
+                    continue;
+
+                component.WinConditions.Add(WinCondition.NukeActiveInStation);
+                SetWinType(uid, WinType.OpsMajor, component);
+                return;
+            }
+        }
+
+        var allAlive = true;
+        var query = EntityQueryEnumerator<NukeopsRoleComponent, MindContainerComponent, MobStateComponent>();
+        while (query.MoveNext(out var nukeopsUid, out _, out var mindContainer, out var mobState))
+        {
+            // mind got deleted somehow so ignore it
+            if (!_mind.TryGetMind(nukeopsUid, out _, out var mind, mindContainer))
+                continue;
+
+            // check if player got gibbed or ghosted or something - count as dead
+            if (mind.OwnedEntity != null &&
+                // if the player somehow isn't a mob anymore that also counts as dead
+                // have to be alive, not crit or dead
+                mobState.CurrentState is MobState.Alive)
+            {
+                continue;
+            }
+
+            allAlive = false;
+            break;
+        }
+
+        // If all nuke ops were alive at the end of the round,
+        // the nuke ops win. This is to prevent people from
+        // running away the moment nuke ops appear.
+        if (allAlive)
+        {
+            SetWinType(uid, WinType.OpsMinor, component);
+            component.WinConditions.Add(WinCondition.AllNukiesAlive);
+            return;
+        }
+
+        component.WinConditions.Add(WinCondition.SomeNukiesAlive);
+
+        var diskAtCentCom = false;
+        var diskQuery = AllEntityQuery<NukeDiskComponent, TransformComponent>();
+
+        while (diskQuery.MoveNext(out _, out var transform))
+        {
+            diskAtCentCom = transform.MapUid != null && centcomms.Contains(transform.MapUid.Value);
+
+            // TODO: The target station should be stored, and the nuke disk should store its original station.
+            // This is fine for now, because we can assume a single station in base SS14.
+            break;
+        }
+
+        // If the disk is currently at Central Command, the crew wins - just slightly.
+        // This also implies that some nuclear operatives have died.
+        if (diskAtCentCom)
+        {
+            SetWinType(uid, WinType.CrewMinor, component);
+            component.WinConditions.Add(WinCondition.NukeDiskOnCentCom);
+        }
+        // Otherwise, the nuke ops win.
+        else
+        {
+            SetWinType(uid, WinType.OpsMinor, component);
+            component.WinConditions.Add(WinCondition.NukeDiskNotOnCentCom);
+        }
+    }
+
+    private void SetWinType(EntityUid uid, WinType type, NukeopsRuleComponent? component = null, bool endRound = true)
+    {
+        if (!Resolve(uid, ref component))
+            return;
+
+        component.WinType = type;
 
         if (endRound && (type == WinType.CrewMajor || type == WinType.OpsMajor))
             _roundEndSystem.EndRound();

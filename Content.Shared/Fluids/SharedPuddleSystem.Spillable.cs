@@ -1,4 +1,3 @@
-using Content.Shared.Chemistry.Components;
 using Content.Shared.Database;
 using Content.Shared.DoAfter;
 using Content.Shared.Examine;
@@ -13,7 +12,7 @@ namespace Content.Shared.Fluids;
 
 public abstract partial class SharedPuddleSystem
 {
-    [Dependency] protected readonly OpenableSystem _openable = default!;
+    [Dependency] protected readonly SharedOpenableSystem Openable = default!;
 
     protected virtual void InitializeSpillable()
     {
@@ -34,17 +33,21 @@ public abstract partial class SharedPuddleSystem
 
     private void AddSpillVerb(Entity<SpillableComponent> entity, ref GetVerbsEvent<Verb> args)
     {
-        if (!args.CanAccess || !args.CanInteract || args.Hands == null)
+        if (!args.CanAccess || !args.CanInteract)
             return;
 
         if (!_solutionContainerSystem.TryGetSolution(args.Target, entity.Comp.SolutionName, out var soln, out var solution))
             return;
 
-        if (_openable.IsClosed(args.Target))
+        if (Openable.IsClosed(args.Target))
             return;
 
         if (solution.Volume == FixedPoint2.Zero)
             return;
+
+        if (HasComp<PreventSpillerComponent>(args.User))
+            return;
+
 
         Verb verb = new()
         {
@@ -59,12 +62,6 @@ public abstract partial class SharedPuddleSystem
             {
                 var puddleSolution = _solutionContainerSystem.SplitSolution(soln.Value, solution.Volume);
                 TrySpillAt(Transform(target).Coordinates, puddleSolution, out _);
-
-                if (TryComp<InjectorComponent>(entity, out var injectorComp))
-                {
-                    injectorComp.ToggleState = InjectorToggleMode.Draw;
-                    Dirty(entity, injectorComp);
-                }
             };
         }
         else

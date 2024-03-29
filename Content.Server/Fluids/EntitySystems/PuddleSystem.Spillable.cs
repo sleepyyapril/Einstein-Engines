@@ -1,4 +1,5 @@
 using Content.Server.Chemistry.Containers.EntitySystems;
+using Content.Server.Nutrition.EntitySystems;
 using Content.Shared.Chemistry.Components;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Chemistry.Reaction;
@@ -6,7 +7,6 @@ using Content.Shared.Chemistry.Reagent;
 using Content.Shared.Clothing;
 using Content.Shared.CombatMode.Pacification;
 using Content.Shared.Database;
-using Content.Shared.DoAfter;
 using Content.Shared.FixedPoint;
 using Content.Shared.Fluids.Components;
 using Content.Shared.Hands.Components;
@@ -15,7 +15,6 @@ using Content.Shared.Nutrition.EntitySystems;
 using Content.Shared.Popups;
 using Content.Shared.Spillable;
 using Content.Shared.Throwing;
-using Content.Shared.Verbs;
 using Content.Shared.Weapons.Melee.Events;
 using Robust.Shared.Player;
 
@@ -30,8 +29,7 @@ public sealed partial class PuddleSystem
         SubscribeLocalEvent<SpillableComponent, LandEvent>(SpillOnLand);
         // Openable handles the event if it's closed
         SubscribeLocalEvent<SpillableComponent, MeleeHitEvent>(SplashOnMeleeHit, after: [typeof(OpenableSystem)]);
-        SubscribeLocalEvent<SpillableComponent, ClothingGotEquippedEvent>(OnGotEquipped);
-        SubscribeLocalEvent<SpillableComponent, ClothingGotUnequippedEvent>(OnGotUnequipped);
+        SubscribeLocalEvent<SpillableComponent, GotEquippedEvent>(OnGotEquipped);
         SubscribeLocalEvent<SpillableComponent, SolutionContainerOverflowEvent>(OnOverflow);
         SubscribeLocalEvent<SpillableComponent, SpillDoAfterEvent>(OnDoAfter);
         SubscribeLocalEvent<SpillableComponent, AttemptPacifiedThrowEvent>(OnAttemptPacifiedThrow);
@@ -132,10 +130,7 @@ public sealed partial class PuddleSystem
         if (!_solutionContainerSystem.TryGetSolution(entity.Owner, entity.Comp.SolutionName, out var soln, out var solution))
             return;
 
-        if (_openable.IsClosed(entity.Owner))
-            return;
-
-        if (!entity.Comp.SpillWhenThrown)
+        if (Openable.IsClosed(entity.Owner))
             return;
 
         if (args.User != null)
@@ -154,7 +149,7 @@ public sealed partial class PuddleSystem
     private void OnAttemptPacifiedThrow(Entity<SpillableComponent> ent, ref AttemptPacifiedThrowEvent args)
     {
         // Don’t care about closed containers.
-        if (_openable.IsClosed(ent))
+        if (Openable.IsClosed(ent))
             return;
 
         // Don’t care about empty containers.
@@ -162,57 +157,6 @@ public sealed partial class PuddleSystem
             return;
 
         args.Cancel("pacified-cannot-throw-spill");
-    }
-
-    private void AddSpillVerb(Entity<SpillableComponent> entity, ref GetVerbsEvent<Verb> args)
-    {
-        if (!args.CanAccess || !args.CanInteract)
-            return;
-
-        if (!_solutionContainerSystem.TryGetSolution(args.Target, entity.Comp.SolutionName, out var soln, out var solution))
-            return;
-
-        if (_openable.IsClosed(args.Target))
-            return;
-
-        if (solution.Volume == FixedPoint2.Zero)
-            return;
-
-        if (EntityManager.HasComponent<HandsComponent>(args.User))
-            return;
-
-
-        Verb verb = new()
-        {
-            Text = Loc.GetString("spill-target-verb-get-data-text")
-        };
-
-        // TODO VERB ICONS spill icon? pouring out a glass/beaker?
-        if (entity.Comp.SpillDelay == null)
-        {
-            var target = args.Target;
-            verb.Act = () =>
-            {
-                var puddleSolution = _solutionContainerSystem.SplitSolution(soln.Value, solution.Volume);
-                TrySpillAt(Transform(target).Coordinates, puddleSolution, out _);
-            };
-        }
-        else
-        {
-            var user = args.User;
-            verb.Act = () =>
-            {
-                _doAfterSystem.TryStartDoAfter(new DoAfterArgs(EntityManager, user, entity.Comp.SpillDelay ?? 0, new SpillDoAfterEvent(), entity.Owner, target: entity.Owner)
-                {
-                    BreakOnDamage = true,
-                    BreakOnMove = true,
-                    NeedHand = true,
-                });
-            };
-        }
-        verb.Impact = LogImpact.Medium; // dangerous reagent reaction are logged separately.
-        verb.DoContactInteraction = true;
-        args.Verbs.Add(verb);
     }
 
     private void OnDoAfter(Entity<SpillableComponent> entity, ref SpillDoAfterEvent args)

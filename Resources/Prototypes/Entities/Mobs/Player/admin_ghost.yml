@@ -101,6 +101,7 @@
   - type: Loadout
     prototypes: [ MobAghostGear ]
   - type: SupermatterImmune
+  - type: BypassInteractionChecks
 
 - type: entity
   id: ActionAGhostShowSolar

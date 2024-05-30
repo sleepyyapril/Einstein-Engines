@@ -232,5 +232,10 @@ namespace Content.Server.Power.EntitySystems
         {
             comp.Load = load;
         }
+
+        public void SetLoad(ApcPowerReceiverComponent comp, float load)
+        {
+            comp.Load = load;
+        }
     }
 }

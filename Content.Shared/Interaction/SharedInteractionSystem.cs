@@ -83,6 +83,7 @@ namespace Content.Shared.Interaction
         private EntityQuery<WallMountComponent> _wallMountQuery;
         private EntityQuery<UseDelayComponent> _delayQuery;
         private EntityQuery<ActivatableUIComponent> _uiQuery;
+        private EntityQuery<ComplexInteractionComponent> _complexInteractionQuery;
 
         private const CollisionGroup InRangeUnobstructedMask = CollisionGroup.Impassable | CollisionGroup.InteractImpassable;
 
@@ -105,6 +106,7 @@ namespace Content.Shared.Interaction
             _wallMountQuery = GetEntityQuery<WallMountComponent>();
             _delayQuery = GetEntityQuery<UseDelayComponent>();
             _uiQuery = GetEntityQuery<ActivatableUIComponent>();
+            _complexInteractionQuery = GetEntityQuery<ComplexInteractionComponent>();
 
             SubscribeLocalEvent<BoundUserInterfaceCheckRangeEvent>(HandleUserInterfaceRangeCheck);
             SubscribeLocalEvent<BoundUserInterfaceMessageAttempt>(OnBoundInterfaceInteractAttempt);
@@ -474,7 +476,7 @@ namespace Content.Shared.Interaction
             if (IsDeleted(user) || IsDeleted(target))
                 return;
 
-            var complexInteractions = _actionBlockerSystem.CanComplexInteract(user);
+            var complexInteractions = SupportsComplexInteractions(user);
             if (!complexInteractions)
             {
                 InteractionActivate(user,
@@ -482,8 +484,7 @@ namespace Content.Shared.Interaction
                     checkCanInteract: false,
                     checkUseDelay: true,
                     checkAccess: false,
-                    complexInteractions: complexInteractions,
-                    checkDeletion: false);
+                    complexInteractions: complexInteractions);
                 return;
             }
 
@@ -1129,7 +1130,7 @@ namespace Content.Shared.Interaction
             if (checkAccess && !IsAccessible(user, used))
                 return false;
 
-            complexInteractions ??= _actionBlockerSystem.CanComplexInteract(user);
+            complexInteractions ??= SupportsComplexInteractions(user);
             var activateMsg = new ActivateInWorldEvent(user, used, complexInteractions.Value);
             RaiseLocalEvent(used, activateMsg, true);
             if (activateMsg.Handled)
@@ -1466,6 +1467,13 @@ namespace Content.Shared.Interaction
 
         public bool Handled => Used != null;
     };
+
+    /// <summary>
+    ///     Raised directed by-ref on an item and a user to determine if interactions can occur.
+    /// </summary>
+    /// <param name="Cancelled">Whether the hand interaction should be cancelled.</param>
+    [ByRefEvent]
+    public record struct AttemptUseInteractEvent(EntityUid User, EntityUid Used, bool Cancelled = false);
 
     /// <summary>
     ///     Raised directed by-ref on an item to determine if hand interactions should go through.

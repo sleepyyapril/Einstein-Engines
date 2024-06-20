@@ -95,7 +95,9 @@
       path: /Audio/Items/crowbar.ogg
     speed: 0.05
   - type: ToolTileCompatible
+    delay: 10
   - type: Prying
+    speedModifier: 0.05
 
 - type: entity
   name: mooltitool

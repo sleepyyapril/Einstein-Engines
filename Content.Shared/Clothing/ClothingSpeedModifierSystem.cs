@@ -81,7 +81,7 @@ public sealed class ClothingSpeedModifierSystem : EntitySystem
 
         // Avoid raising the event for the container if nothing changed.
         // We'll still set the values in case they're slightly different but within tolerance.
-        if (diff && _container.TryGetContainingContainer(uid, out var container))
+        if (diff && _container.TryGetContainingContainer((uid, null, null), out var container))
         {
             _movementSpeed.RefreshMovementSpeedModifiers(container.Owner);
         }
@@ -149,38 +149,10 @@ public sealed class ClothingSpeedModifierSystem : EntitySystem
 
     private void OnToggleSpeed(Entity<ToggleClothingSpeedComponent> uid, ref ToggleClothingSpeedEvent args)
     {
-        if (args.Handled)
-            return;
+        // make sentient boots slow or fast too
+        _movementSpeed.RefreshMovementSpeedModifiers(ent);
 
-        args.Handled = true;
-        SetSpeedToggleEnabled(uid, !uid.Comp.Enabled, args.Performer);
-    }
-
-    private void SetSpeedToggleEnabled(Entity<ToggleClothingSpeedComponent> uid, bool value, EntityUid? user)
-    {
-        if (uid.Comp.Enabled == value)
-            return;
-
-        TryComp<PowerCellDrawComponent>(uid, out var draw);
-        if (value && !_powerCell.HasDrawCharge(uid, draw, user: user))
-            return;
-
-        uid.Comp.Enabled = value;
-
-        _appearance.SetData(uid, ToggleVisuals.Toggled, uid.Comp.Enabled);
-        _actions.SetToggled(uid.Comp.ToggleActionEntity, uid.Comp.Enabled);
-        _clothingSpeedModifier.SetClothingSpeedModifierEnabled(uid.Owner, uid.Comp.Enabled);
-        _powerCell.SetPowerCellDrawEnabled(uid, uid.Comp.Enabled, draw);
-        Dirty(uid, uid.Comp);
-    }
-
-    private void AddToggleVerb(Entity<ToggleClothingSpeedComponent> uid, ref GetVerbsEvent<ActivationVerb> args)
-    {
-        if (!args.CanAccess || !args.CanInteract)
-            return;
-
-        var user = args.User;
-        ActivationVerb verb = new()
+        if (_container.TryGetContainingContainer((ent.Owner, null, null), out var container))
         {
             Text = Loc.GetString("toggle-clothing-verb-text",
                 ("entity", Identity.Entity(uid, EntityManager))),

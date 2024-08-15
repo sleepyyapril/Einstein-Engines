@@ -26,6 +26,10 @@
       - id: BoxEncryptionKeyPrisoner #Delta-V
       - id: LunchboxSecurityFilledRandom # Delta-v Lunchboxes!
         prob: 0.3
+      - id: ClothingNeckShockCollar
+        amount: 2
+      - id: RemoteSignaller
+        amount: 2
 
 - type: entity
   id: LockerWardenFilled
@@ -54,6 +58,10 @@
       - id: BoxEncryptionKeyPrisoner #Delta-V
       - id: LunchboxSecurityFilledRandom # Delta-v Lunchboxes!
         prob: 0.3
+      - id: ClothingNeckShockCollar
+        amount: 2
+      - id: RemoteSignaller
+        amount: 2
 
 - type: entity
   id: LockerSecurityFilled

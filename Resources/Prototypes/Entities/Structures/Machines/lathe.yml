@@ -898,6 +898,7 @@
       - MagazineBoxSpecialIncendiary
       - MagazineBoxSpecialUranium
       - MagazineBoxSpecialMindbreaker
+      - ClothingBackpackElectropack
   - type: MaterialStorage
     whitelist:
       tags:

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Content.Server.Administration.Logs;
 using Content.Server.Administration.Managers;
 using Content.Server.Power.Components;
@@ -211,22 +212,16 @@ namespace Content.Server.Power.EntitySystems
             comp.Load = load;
         }
 
-        private void OnEmpPulse(EntityUid uid, ApcPowerReceiverComponent component, ref EmpPulseEvent args)
+        public override bool ResolveApc(EntityUid entity, [NotNullWhen(true)] ref SharedApcPowerReceiverComponent? component)
         {
-            if (!component.PowerDisabled)
-            {
-                args.Affected = true;
-                args.Disabled = true;
-                TogglePower(uid, false);
-            }
-        }
+            if (component != null)
+                return true;
 
-        private void OnEmpEnd(EntityUid uid, ApcPowerReceiverComponent component, ref EmpDisabledRemoved args)
-        {
-            if (component.PowerDisabled)
-            {
-                TogglePower(uid, false);
-            }
+            if (!TryComp(entity, out ApcPowerReceiverComponent? receiver))
+                return false;
+
+            component = receiver;
+            return true;
         }
     }
 }

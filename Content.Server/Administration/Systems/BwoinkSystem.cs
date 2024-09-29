@@ -12,6 +12,7 @@ using Content.Server.GameTicking;
 using Content.Shared.Administration;
 using Content.Shared.CCVar;
 using Content.Shared.Mind;
+using Content.Shared.Players.RateLimiting;
 using JetBrains.Annotations;
 using Robust.Server.Player;
 using Robust.Shared;
@@ -80,6 +81,21 @@ namespace Content.Server.Administration.Systems
 
             SubscribeLocalEvent<GameRunLevelChangedEvent>(OnGameRunLevelChanged);
             SubscribeNetworkEvent<BwoinkClientTypingUpdated>(OnClientTypingUpdated);
+            SubscribeLocalEvent<RoundRestartCleanupEvent>(_ => _activeConversations.Clear());
+
+        	_rateLimit.Register(
+                RateLimitKey,
+                new RateLimitRegistration(CCVars.AhelpRateLimitPeriod,
+                    CCVars.AhelpRateLimitCount,
+                    PlayerRateLimitedAction)
+                );
+        }
+
+        private void PlayerRateLimitedAction(ICommonSession obj)
+        {
+            RaiseNetworkEvent(
+                new BwoinkTextMessage(obj.UserId, default, Loc.GetString("bwoink-system-rate-limited"), playSound: false),
+                obj.Channel);
         }
 
         private void OnOverrideChanged(string obj)

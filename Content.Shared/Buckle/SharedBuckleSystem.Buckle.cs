@@ -30,14 +30,9 @@ public abstract partial class SharedBuckleSystem
     public static ProtoId<AlertCategoryPrototype> BuckledAlertCategory = "Buckled";
 
     [Dependency] private readonly EntityWhitelistSystem _whitelistSystem = default!;
-    [Dependency] private readonly ILogManager _logManager = default!;
-
-    private ISawmill _sawmill = default!;
 
     private void InitializeBuckle()
     {
-        _sawmill = _logManager.GetSawmill("SharedBuckleSystem");
-
         SubscribeLocalEvent<BuckleComponent, ComponentShutdown>(OnBuckleComponentShutdown);
         SubscribeLocalEvent<BuckleComponent, MoveEvent>(OnBuckleMove);
         SubscribeLocalEvent<BuckleComponent, EntParentChangedMessage>(OnParentChanged);
@@ -197,15 +192,8 @@ public abstract partial class SharedBuckleSystem
             _alerts.ClearAlertCategory(buckle, BuckledAlertCategory);
         }
 
-        _sawmill.Info("Trying to set BuckledTo...");
-        _sawmill.Info($"BuckledTo: {ToPrettyString(buckle.Comp.BuckledTo)}");
-        _sawmill.Info($"Buckled: {buckle.Comp.Buckled}");
-
         buckle.Comp.BuckledTo = strap;
         buckle.Comp.BuckleTime = _gameTiming.CurTime;
-
-        _sawmill.Info($"BuckledTo: {ToPrettyString(buckle.Comp.BuckledTo)}");
-        _sawmill.Info($"Buckled: {buckle.Comp.Buckled}");
         ActionBlocker.UpdateCanMove(buckle);
         Appearance.SetData(buckle, StrapVisuals.State, buckle.Comp.Buckled);
         Dirty(buckle);
@@ -339,21 +327,17 @@ public abstract partial class SharedBuckleSystem
     /// <param name="strap"> Uid of the owner of strap component </param>
     public bool TryBuckle(EntityUid buckle, EntityUid? user, EntityUid strap, BuckleComponent? buckleComp = null, bool popup = true)
     {
-        _sawmill.Info("Try buckle.");
         if (!Resolve(buckle, ref buckleComp, false)) 
         {
-            _sawmill.Info("Failed to resolve buckle.");
             return false;
         }
 
         if (!CanBuckle(buckle, user, strap, popup, out var strapComp, buckleComp)) 
         {
-            _sawmill.Info("Can't buckle.");
             return false;
         }
 
         Buckle((buckle, buckleComp), (strap, strapComp), user);
-        _sawmill.Info("Success");
         return true;
     }
 

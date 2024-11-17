@@ -24,9 +24,14 @@ public abstract class SharedLayingDownSystem : EntitySystem
     [Dependency] private readonly SharedPopupSystem _popups = default!;
     [Dependency] private readonly MovementSpeedModifierSystem _speed = default!;
     [Dependency] private readonly ActionBlockerSystem _actionBlocker = default!;
+    [Dependency] private readonly ILogManager _logManager = default!;
+
+    private ISawmill _sawmill = default!;
 
     public override void Initialize()
     {
+        _sawmill = _logManager.GetSawmill("sharedLayingDownSystem");
+
         CommandBinds.Builder
             .Bind(ContentKeyFunctions.ToggleStanding, InputCmdHandler.FromDelegate(ToggleStanding))
             .Bind(ContentKeyFunctions.ToggleCrawlingUnder, InputCmdHandler.FromDelegate(HandleCrawlUnderRequest, handle: false))
@@ -52,7 +57,10 @@ public abstract class SharedLayingDownSystem : EntitySystem
             || !Exists(uid)
             || !HasComp<LayingDownComponent>(session.AttachedEntity)
             || _gravity.IsWeightless(session.AttachedEntity.Value))
+        {
+            _sawmill.Info("Failed ToggleStanding");
             return;
+        }
 
         RaiseNetworkEvent(new ChangeLayingDownEvent());
     }
@@ -110,7 +118,10 @@ public abstract class SharedLayingDownSystem : EntitySystem
             || HasComp<KnockedDownComponent>(uid)
             || _mobState.IsIncapacitated(uid)
             || !_standing.Stand(uid))
+        {
             component.CurrentState = StandingState.Lying;
+            _sawmill.Info("Failed OnStandingUpDoAfter");
+        }
 
         component.CurrentState = StandingState.Standing;
     }
@@ -142,7 +153,10 @@ public abstract class SharedLayingDownSystem : EntitySystem
             || standingState.CurrentState is not StandingState.Lying
             || !_mobState.IsAlive(uid)
             || TerminatingOrDeleted(uid))
+        {
+            _sawmill.Info("Failed TryStandUp");
             return false;
+        }
 
         var args = new DoAfterArgs(EntityManager, uid, layingDown.StandingUpTime, new StandingUpDoAfterEvent(), uid)
         {

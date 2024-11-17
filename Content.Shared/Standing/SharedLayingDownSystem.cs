@@ -156,7 +156,7 @@ public abstract class SharedLayingDownSystem : EntitySystem
             || !_mobState.IsAlive(uid)
             || TerminatingOrDeleted(uid)
             || !TryComp<BodyComponent>(uid, out var body)
-            || body.LegEntities.Count == 0)
+            || body.LegEntities.Count == 0
             || TerminatingOrDeleted(uid))
         {
             _sawmill.Info("Failed TryStandUp");

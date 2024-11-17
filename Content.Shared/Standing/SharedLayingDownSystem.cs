@@ -5,6 +5,8 @@ using Content.Shared.Gravity;
 using Content.Shared.Input;
 using Content.Shared.Mobs.Systems;
 using Content.Shared.Movement.Systems;
+using Content.Shared.Body.Components;
+using Content.Shared.Standing;
 using Content.Shared.Popups;
 using Content.Shared.Stunnable;
 using Robust.Shared.Configuration;
@@ -153,6 +155,8 @@ public abstract class SharedLayingDownSystem : EntitySystem
             || standingState.CurrentState is not StandingState.Lying
             || !_mobState.IsAlive(uid)
             || TerminatingOrDeleted(uid))
+            || !TryComp<BodyComponent>(uid, out var body)
+            || body.LegEntities.Count == 0)
         {
             _sawmill.Info("Failed TryStandUp");
             return false;

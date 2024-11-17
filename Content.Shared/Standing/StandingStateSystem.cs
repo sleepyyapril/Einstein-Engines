@@ -24,7 +24,7 @@ public sealed class StandingStateSystem : EntitySystem
     [Dependency] private readonly ClimbSystem _climb = default!;
 
     // If StandingCollisionLayer value is ever changed to more than one layer, the logic needs to be edited.
-    private const int StandingCollisionLayer = (int)CollisionGroup.MidImpassable;
+    private const int StandingCollisionLayer = (int) CollisionGroup.MidImpassable;
 
     public bool IsDown(EntityUid uid, StandingStateComponent? standingState = null)
     {
@@ -34,10 +34,7 @@ public sealed class StandingStateSystem : EntitySystem
         return standingState.CurrentState is StandingState.Lying or StandingState.GettingUp;
     }
 
-    public bool Down(EntityUid uid,
-        bool playSound = true,
-        bool dropHeldItems = true,
-        bool force = false,
+    public bool Down(EntityUid uid, bool playSound = true, bool dropHeldItems = true,
         StandingStateComponent? standingState = null,
         AppearanceComponent? appearance = null,
         HandsComponent? hands = null)
@@ -59,19 +56,16 @@ public sealed class StandingStateSystem : EntitySystem
         if (dropHeldItems && hands != null)
             RaiseLocalEvent(uid, new DropHandItemsEvent(), false);
 
-        if (TryComp(uid, out BuckleComponent? buckle) && buckle.Buckled)
+        if (TryComp(uid, out BuckleComponent? buckle) && buckle.Buckled && !_buckle.TryUnbuckle(uid, uid, buckleComp: buckle))
             return false;
 
-        if (!force)
-        {
-            var msg = new DownAttemptEvent();
-            RaiseLocalEvent(uid, msg, false);
+        var msg = new DownAttemptEvent();
+        RaiseLocalEvent(uid, msg, false);
 
-            if (msg.Cancelled)
-                return false;
-        }
+        if (msg.Cancelled)
+            return false;
 
-        standingState.Standing = false;
+        standingState.CurrentState = StandingState.Lying;
         Dirty(uid, standingState);
         RaiseLocalEvent(uid, new DownedEvent(), false);
 

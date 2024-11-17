@@ -186,9 +186,11 @@ public abstract class SharedLayingDownSystem : EntitySystem
             if (behavior == DropHeldItemsBehavior.AlwaysDrop)
                 RaiseLocalEvent(uid, new DropHandItemsEvent());
 
+            _sawmill.Info("Fail?");
             return false;
         }
 
+        _sawmill.Info("Succeed!");
         _standing.Down(uid, true, behavior != DropHeldItemsBehavior.NoDrop, standingState: standingState);
         return true;
     }

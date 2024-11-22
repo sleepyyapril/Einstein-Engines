@@ -312,7 +312,7 @@ public abstract class SharedStorageSystem : EntitySystem
                 Audio.PlayPredicted(storageComp.StorageOpenSound, uid, entity);
 
             if (useDelay != null)
-                UseDelay.TryResetDelay((uid, useDelay));
+                UseDelay.TryResetDelay((uid, useDelay), id: OpenUiUseDelayID);
         }
 
         _ui.OpenUi(uid, StorageComponent.StorageUiKey.Key, entity);
@@ -376,7 +376,7 @@ public abstract class SharedStorageSystem : EntitySystem
         if (_ui.IsUiOpen(uid, StorageComponent.StorageUiKey.Key, args.User))
             _ui.CloseUi(uid, StorageComponent.StorageUiKey.Key, args.User);
         else
-            OpenStorageUI(uid, args.User, storageComp);
+            OpenStorageUI(uid, args.User, storageComp, false);
 
         args.Handled = true;
     }
@@ -1446,7 +1446,7 @@ public abstract class SharedStorageSystem : EntitySystem
         if (session is not { } playerSession)
             return;
 
-        if (playerSession.AttachedEntity is not {Valid: true} playerEnt || !Exists(playerEnt))
+        if (playerSession.AttachedEntity is not { Valid: true } playerEnt || !Exists(playerEnt))
             return;
 
         if (!_inventory.TryGetSlotEntity(playerEnt, slot, out var storageEnt))

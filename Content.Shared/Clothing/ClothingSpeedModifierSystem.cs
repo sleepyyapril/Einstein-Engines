@@ -52,7 +52,7 @@ public sealed class ClothingSpeedModifierSystem : EntitySystem
             Dirty(uid, component);
 
             // inventory system will automatically hook into the event raised by this and update accordingly
-            if (_container.TryGetContainingContainer(uid, out var container))
+            if (_container.TryGetContainingContainer((uid, null, null), out var container))
             {
                 _movementSpeed.RefreshMovementSpeedModifiers(container.Owner);
             }
@@ -111,19 +111,19 @@ public sealed class ClothingSpeedModifierSystem : EntitySystem
         if (walkModifierPercentage == sprintModifierPercentage)
         {
             if (walkModifierPercentage < 0.0f)
-                msg.AddMarkup(Loc.GetString("clothing-speed-increase-equal-examine", ("walkSpeed", MathF.Abs(walkModifierPercentage)), ("runSpeed", MathF.Abs(sprintModifierPercentage))));
+                msg.AddMarkupOrThrow(Loc.GetString("clothing-speed-increase-equal-examine", ("walkSpeed", MathF.Abs(walkModifierPercentage)), ("runSpeed", MathF.Abs(sprintModifierPercentage))));
             else
-                msg.AddMarkup(Loc.GetString("clothing-speed-decrease-equal-examine", ("walkSpeed", walkModifierPercentage), ("runSpeed", sprintModifierPercentage)));
+                msg.AddMarkupOrThrow(Loc.GetString("clothing-speed-decrease-equal-examine", ("walkSpeed", walkModifierPercentage), ("runSpeed", sprintModifierPercentage)));
         }
         else
         {
             if (sprintModifierPercentage < 0.0f)
             {
-                msg.AddMarkup(Loc.GetString("clothing-speed-increase-run-examine", ("runSpeed", MathF.Abs(sprintModifierPercentage))));
+                msg.AddMarkupOrThrow(Loc.GetString("clothing-speed-increase-run-examine", ("runSpeed", MathF.Abs(sprintModifierPercentage))));
             }
             else if (sprintModifierPercentage > 0.0f)
             {
-                msg.AddMarkup(Loc.GetString("clothing-speed-decrease-run-examine", ("runSpeed", sprintModifierPercentage)));
+                msg.AddMarkupOrThrow(Loc.GetString("clothing-speed-decrease-run-examine", ("runSpeed", sprintModifierPercentage)));
             }
             if (walkModifierPercentage != 0.0f && sprintModifierPercentage != 0.0f)
             {
@@ -131,11 +131,11 @@ public sealed class ClothingSpeedModifierSystem : EntitySystem
             }
             if (walkModifierPercentage < 0.0f)
             {
-                msg.AddMarkup(Loc.GetString("clothing-speed-increase-walk-examine", ("walkSpeed", MathF.Abs(walkModifierPercentage))));
+                msg.AddMarkupOrThrow(Loc.GetString("clothing-speed-increase-walk-examine", ("walkSpeed", MathF.Abs(walkModifierPercentage))));
             }
             else if (walkModifierPercentage > 0.0f)
             {
-                msg.AddMarkup(Loc.GetString("clothing-speed-decrease-walk-examine", ("walkSpeed", walkModifierPercentage)));
+                msg.AddMarkupOrThrow(Loc.GetString("clothing-speed-decrease-walk-examine", ("walkSpeed", walkModifierPercentage)));
             }
         }
 
@@ -149,10 +149,38 @@ public sealed class ClothingSpeedModifierSystem : EntitySystem
 
     private void OnToggleSpeed(Entity<ToggleClothingSpeedComponent> uid, ref ToggleClothingSpeedEvent args)
     {
-        // make sentient boots slow or fast too
-        _movementSpeed.RefreshMovementSpeedModifiers(ent);
+        if (args.Handled)
+            return;
 
-        if (_container.TryGetContainingContainer((ent.Owner, null, null), out var container))
+        args.Handled = true;
+        SetSpeedToggleEnabled(uid, !uid.Comp.Enabled, args.Performer);
+    }
+
+    private void SetSpeedToggleEnabled(Entity<ToggleClothingSpeedComponent> uid, bool value, EntityUid? user)
+    {
+        if (uid.Comp.Enabled == value)
+            return;
+
+        TryComp<PowerCellDrawComponent>(uid, out var draw);
+        if (value && !_powerCell.HasDrawCharge(uid, draw, user: user))
+            return;
+
+        uid.Comp.Enabled = value;
+
+        _appearance.SetData(uid, ToggleVisuals.Toggled, uid.Comp.Enabled);
+        _actions.SetToggled(uid.Comp.ToggleActionEntity, uid.Comp.Enabled);
+        _clothingSpeedModifier.SetClothingSpeedModifierEnabled(uid.Owner, uid.Comp.Enabled);
+        _powerCell.SetPowerCellDrawEnabled(uid, uid.Comp.Enabled, draw);
+        Dirty(uid, uid.Comp);
+    }
+
+    private void AddToggleVerb(Entity<ToggleClothingSpeedComponent> uid, ref GetVerbsEvent<ActivationVerb> args)
+    {
+        if (!args.CanAccess || !args.CanInteract)
+            return;
+
+        var user = args.User;
+        ActivationVerb verb = new()
         {
             Text = Loc.GetString("toggle-clothing-verb-text",
                 ("entity", Identity.Entity(uid, EntityManager))),

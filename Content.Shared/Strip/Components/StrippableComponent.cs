@@ -51,7 +51,7 @@ namespace Content.Shared.Strip.Components
     ///     This is also used by some stripping related interactions, i.e., interactions with items that are currently equipped by another player.
     /// </remarks>
     [ByRefEvent]
-    public sealed class BeforeItemStrippedEvent(TimeSpan initialTime, bool stealth = false) : BaseBeforeStripEvent(initialTime, stealth);
+    public sealed class BeforeItemStrippedEvent(TimeSpan initialTime, ThievingStealth stealth = false) : BaseBeforeStripEvent(initialTime, stealth);
 
     /// <summary>
     ///     Used to modify strip times. Raised directed at the user.

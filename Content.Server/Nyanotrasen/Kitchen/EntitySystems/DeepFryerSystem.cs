@@ -623,8 +623,7 @@ public sealed partial class DeepFryerSystem : SharedDeepfryerSystem
         var doAfterArgs = new DoAfterArgs(EntityManager, user, delay, ev, uid, uid, heldItem)
         {
             BreakOnDamage = true,
-            BreakOnTargetMove = true,
-            BreakOnUserMove = true,
+            BreakOnMove = true,
             MovementThreshold = 0.25f,
             NeedHand = true
         };

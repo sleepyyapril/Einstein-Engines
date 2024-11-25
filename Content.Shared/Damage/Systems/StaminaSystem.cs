@@ -232,6 +232,7 @@ public sealed partial class StaminaSystem : EntitySystem
         {
             _alerts.ClearAlert(uid, "Stamina");
             return;
+        }
 
         var severity = ContentHelpers.RoundToLevels(MathF.Max(0f, component.CritThreshold - component.StaminaDamage), component.CritThreshold, 7);
         _alerts.ShowAlert(uid, component.StaminaAlert, (short) severity);

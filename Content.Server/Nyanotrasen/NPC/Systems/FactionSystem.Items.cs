@@ -1,3 +1,4 @@
+using Content.Shared.NPC.Components;
 using Content.Server.NPC.Components;
 using Content.Server.Store.Systems;
 using Content.Shared.Clothing.Components;
@@ -7,6 +8,8 @@ namespace Content.Server.NPC.Systems;
 
 public partial class NpcFactionSystem : EntitySystem
 {
+    [Dependency] private readonly Content.Shared.NPC.Systems.NpcFactionSystem _npcFactionSystem = default!;
+
     public void InitializeItems()
     {
         SubscribeLocalEvent<NpcFactionMemberComponent, ItemPurchasedEvent>(OnItemPurchased);
@@ -21,7 +24,8 @@ public partial class NpcFactionSystem : EntitySystem
     /// </summary>
     private void OnItemPurchased(EntityUid uid, NpcFactionMemberComponent component, ref ItemPurchasedEvent args)
     {
-        component.ExceptionalFriendlies.Add(args.Purchaser);
+        foreach (var faction in component.FriendlyFactions)
+            _npcFactionSystem.AddFaction((uid, component), faction);
     }
 
     private void OnClothingEquipped(EntityUid uid, ClothingAddFactionComponent component, GotEquippedEvent args)
@@ -35,11 +39,11 @@ public partial class NpcFactionSystem : EntitySystem
         if (!TryComp<NpcFactionMemberComponent>(args.Equipee, out var factionComponent))
             return;
 
-        if (factionComponent.Factions.Contains(component.Faction))
+        if (_npcFactionSystem.IsMember((args.Equipee, factionComponent), component.Faction))
             return;
 
         component.IsActive = true;
-        AddFaction(args.Equipee, component.Faction);
+        _npcFactionSystem.AddFaction(args.Equipee, component.Faction);
     }
 
     private void OnClothingUnequipped(EntityUid uid, ClothingAddFactionComponent component, GotUnequippedEvent args)
@@ -48,6 +52,6 @@ public partial class NpcFactionSystem : EntitySystem
             return;
 
         component.IsActive = false;
-        RemoveFaction(args.Equipee, component.Faction);
+        _npcFactionSystem.RemoveFaction(args.Equipee, component.Faction);
     }
 }

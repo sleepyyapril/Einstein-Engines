@@ -1,4 +1,5 @@
 using Content.Server.Destructible;
+using Content.Shared.NPC.Components;
 using Content.Server.NPC.Components;
 using Content.Server.NPC.Pathfinding;
 using Content.Shared.Climbing;

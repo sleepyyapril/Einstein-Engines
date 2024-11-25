@@ -6,6 +6,7 @@ using Content.Shared.Damage.Events;
 using Content.Shared.CCVar;
 using Content.Server.Abilities.Psionics;
 using Content.Server.Electrocution;
+using Content.Shared.NPC.Components;
 using Content.Server.NPC.Components;
 using Content.Server.NPC.Systems;
 using Robust.Shared.Audio.Systems;

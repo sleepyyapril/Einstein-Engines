@@ -6,6 +6,7 @@ using Content.Shared.Chemistry.Reagent;
 using Content.Shared.Clothing;
 using Content.Shared.CombatMode.Pacification;
 using Content.Shared.Database;
+using Content.Shared.DoAfter;
 using Content.Shared.FixedPoint;
 using Content.Shared.Fluids.Components;
 using Content.Shared.IdentityManagement;
@@ -13,6 +14,7 @@ using Content.Shared.Nutrition.EntitySystems;
 using Content.Shared.Popups;
 using Content.Shared.Spillable;
 using Content.Shared.Throwing;
+using Content.Shared.Verbs;
 using Content.Shared.Weapons.Melee.Events;
 using Robust.Shared.Player;
 
@@ -129,7 +131,7 @@ public sealed partial class PuddleSystem
         if (!_solutionContainerSystem.TryGetSolution(entity.Owner, entity.Comp.SolutionName, out var soln, out var solution))
             return;
 
-        if (Openable.IsClosed(entity.Owner))
+        if (_openable.IsClosed(entity.Owner))
             return;
 
         if (!entity.Comp.SpillWhenThrown)
@@ -151,7 +153,7 @@ public sealed partial class PuddleSystem
     private void OnAttemptPacifiedThrow(Entity<SpillableComponent> ent, ref AttemptPacifiedThrowEvent args)
     {
         // Don’t care about closed containers.
-        if (Openable.IsClosed(ent))
+        if (_openable.IsClosed(ent))
             return;
 
         // Don’t care about empty containers.
@@ -175,7 +177,7 @@ public sealed partial class PuddleSystem
         if (solution.Volume == FixedPoint2.Zero)
             return;
 
-        if (_entityManager.HasComponent<PreventSpillerComponent>(args.User))
+        if (EntityManager.HasComponent<PreventSpillerComponent>(args.User))
             return;
 
 

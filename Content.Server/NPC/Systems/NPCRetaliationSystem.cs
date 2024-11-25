@@ -1,8 +1,10 @@
+using Content.Shared.NPC.Components;
 using Content.Server.NPC.Components;
 using Content.Shared.CombatMode;
 using Content.Shared.Damage;
 using Content.Shared.Mobs.Components;
 using Content.Shared.NPC.Components;
+using Content.Server.NPC.Components;
 using Content.Shared.NPC.Systems;
 using Robust.Shared.Collections;
 using Robust.Shared.Timing;

@@ -9,6 +9,7 @@ using Content.Shared.Clothing;
 using Content.Shared.Clothing.Components;
 using Content.Shared.Database;
 using Content.Shared.NPC.Components;
+using Content.Server.NPC.Components;
 using Content.Shared.NPC.Systems;
 using Content.Shared.Players;
 using Content.Shared.Popups;
@@ -25,7 +26,7 @@ public sealed class CursedMaskSystem : SharedCursedMaskSystem
     [Dependency] private readonly HTNSystem _htn = default!;
     [Dependency] private readonly MindSystem _mind = default!;
     [Dependency] private readonly NPCSystem _npc = default!;
-    [Dependency] private readonly NpcFactionSystem _npcFaction = default!;
+    [Dependency] private readonly Content.Shared.NPC.Systems.NpcFactionSystem _npcFaction = default!;
     [Dependency] private readonly PopupSystem _popup = default!;
 
     // We can't store this info on the component easily
@@ -72,7 +73,9 @@ public sealed class CursedMaskSystem : SharedCursedMaskSystem
 
             var npcFaction = EnsureComp<NpcFactionMemberComponent>(args.Wearer);
             _npcFaction.RemoveFaction((args.Wearer, npcFaction), ent.Comp.CursedMaskFaction, false);
-            _npcFaction.AddFactions((args.Wearer, npcFaction), ent.Comp.OldFactions);
+
+            foreach (var oldFaction in ent.Comp.OldFactions)
+                _npcFaction.AddFaction((args.Wearer, npcFaction), oldFaction, false);
 
             ent.Comp.HasNpc = false;
             ent.Comp.OldFactions.Clear();

@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Content.Shared.NPC.Components;
 using Content.Server.NPC.Components;
 using Robust.Shared.Random;
 

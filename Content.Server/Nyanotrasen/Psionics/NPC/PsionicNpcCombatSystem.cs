@@ -1,6 +1,7 @@
 using Content.Shared.Abilities.Psionics;
 using Content.Shared.Actions;
 using Content.Server.NPC.Events;
+using Content.Shared.NPC.Components;
 using Content.Server.NPC.Components;
 using Content.Server.Abilities.Psionics;
 using Content.Shared.Psionics;

@@ -1,4 +1,5 @@
 using System.Threading;
+using Content.Shared.NPC.Components;
 using Content.Server.NPC.Components;
 
 namespace Content.Server.NPC.HTN;

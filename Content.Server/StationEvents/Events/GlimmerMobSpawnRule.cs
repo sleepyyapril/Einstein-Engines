@@ -2,6 +2,7 @@ using System.Linq;
 using Content.Shared.GameTicking.Components;
 using Robust.Shared.Random;
 using Content.Server.GameTicking;
+using Content.Shared.NPC.Components;
 using Content.Server.NPC.Components;
 using Content.Server.Psionics.Glimmer;
 using Content.Server.Station.Systems;

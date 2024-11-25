@@ -13,7 +13,7 @@ namespace Content.Shared.Fluids;
 
 public abstract partial class SharedPuddleSystem
 {
-    [Dependency] protected readonly OpenableSystem Openable = default!;
+    [Dependency] protected readonly OpenableSystem _openable = default!;
 
     protected virtual void InitializeSpillable()
     {
@@ -40,7 +40,7 @@ public abstract partial class SharedPuddleSystem
         if (!_solutionContainerSystem.TryGetSolution(args.Target, entity.Comp.SolutionName, out var soln, out var solution))
             return;
 
-        if (Openable.IsClosed(args.Target))
+        if (_openable.IsClosed(args.Target))
             return;
 
         if (solution.Volume == FixedPoint2.Zero)

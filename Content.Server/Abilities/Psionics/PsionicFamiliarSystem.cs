@@ -1,4 +1,5 @@
 using Content.Server.NPC;
+using Content.Shared.NPC.Components;
 using Content.Server.NPC.Components;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.Systems;
@@ -15,7 +16,7 @@ namespace Content.Server.Abilities.Psionics;
 public sealed partial class PsionicFamiliarSystem : EntitySystem
 {
     [Dependency] private readonly SharedPsionicAbilitiesSystem _psionics = default!;
-    [Dependency] private readonly NpcFactionSystem _factions = default!;
+    [Dependency] private readonly Content.Shared.NPC.Systems.NpcFactionSystem _factions = default!;
     [Dependency] private readonly NPCSystem _npc = default!;
     [Dependency] private readonly HTNSystem _htn = default!;
     [Dependency] private readonly PopupSystem _popup = default!;
@@ -60,7 +61,7 @@ public sealed partial class PsionicFamiliarSystem : EntitySystem
         EnsureComp<NpcFactionMemberComponent>(familiar, out var familiarFactions);
         foreach (var faction in masterFactions.Factions)
         {
-            if (familiarFactions.Factions.Contains(faction))
+            if (_factions.IsMember((familiar, familiarFactions), faction))
                 continue;
 
             _factions.AddFaction(familiar, faction, true);

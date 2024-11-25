@@ -24,7 +24,7 @@ public sealed class StandingStateSystem : EntitySystem
     [Dependency] private readonly ClimbSystem _climb = default!;
 
     // If StandingCollisionLayer value is ever changed to more than one layer, the logic needs to be edited.
-    private const int StandingCollisionLayer = (int)CollisionGroup.MidImpassable;
+    private const int StandingCollisionLayer = (int) CollisionGroup.MidImpassable;
 
     public bool IsDown(EntityUid uid, StandingStateComponent? standingState = null)
     {
@@ -71,7 +71,7 @@ public sealed class StandingStateSystem : EntitySystem
                 return false;
         }
 
-        standingState.Standing = false;
+        standingState.CurrentState = StandingState.Lying;
         Dirty(uid, standingState);
         RaiseLocalEvent(uid, new DownedEvent(), false);
 

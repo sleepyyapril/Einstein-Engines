@@ -369,18 +369,14 @@ public abstract class SharedStorageSystem : EntitySystem
     /// </summary>
     private void OnActivate(EntityUid uid, StorageComponent storageComp, ActivateInWorldEvent args)
     {
-        if (args.Handled || TryComp<LockComponent>(uid, out var lockComponent) && lockComponent.Locked)
+        if (args.Handled || !args.Complex || !CanInteract(args.User, (uid, storageComp), storageComp.ClickInsert))
             return;
 
         // Toggle
         if (_ui.IsUiOpen(uid, StorageComponent.StorageUiKey.Key, args.User))
-        {
             _ui.CloseUi(uid, StorageComponent.StorageUiKey.Key, args.User);
-        }
         else
-        {
             OpenStorageUI(uid, args.User, storageComp);
-        }
 
         args.Handled = true;
     }

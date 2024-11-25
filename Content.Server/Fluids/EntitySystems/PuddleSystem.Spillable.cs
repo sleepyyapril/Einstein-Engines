@@ -9,6 +9,7 @@ using Content.Shared.Database;
 using Content.Shared.DoAfter;
 using Content.Shared.FixedPoint;
 using Content.Shared.Fluids.Components;
+using Content.Shared.Hands.Components;
 using Content.Shared.IdentityManagement;
 using Content.Shared.Nutrition.EntitySystems;
 using Content.Shared.Popups;
@@ -177,7 +178,7 @@ public sealed partial class PuddleSystem
         if (solution.Volume == FixedPoint2.Zero)
             return;
 
-        if (EntityManager.HasComponent<PreventSpillerComponent>(args.User))
+        if (EntityManager.HasComponent<HandsComponent>(args.User))
             return;
 
 

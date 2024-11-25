@@ -89,7 +89,12 @@ public sealed partial class BonkSystem : EntitySystem
 
     }
 
-    private bool TryStartBonk(EntityUid uid, EntityUid user, EntityUid climber, BonkableComponent? bonkableComponent = null)
+    private bool TryStartBonk(
+        EntityUid uid,
+        EntityUid user,
+        EntityUid climber,
+        BonkableComponent? bonkableComponent = null
+    )
     {
         if (!Resolve(uid, ref bonkableComponent, false))
             return false;
@@ -104,7 +109,14 @@ public sealed partial class BonkSystem : EntitySystem
                 return false;
         }
 
-        var doAfterArgs = new DoAfterArgs(EntityManager, user, bonkableComponent.BonkDelay, new BonkDoAfterEvent(), uid, target: uid, used: climber)
+        var doAfterArgs = new DoAfterArgs(
+            EntityManager,
+            user,
+            bonkableComponent.BonkDelay,
+            new BonkDoAfterEvent(),
+            uid,
+            target: uid,
+            used: climber)
         {
             BreakOnMove = true,
             BreakOnDamage = true,
@@ -112,15 +124,6 @@ public sealed partial class BonkSystem : EntitySystem
         };
 
         return _doAfter.TryStartDoAfter(doAfterArgs);
-    }
-
-    private void OnAttemptClimb(EntityUid uid, BonkableComponent component, ref AttemptClimbEvent args)
-    {
-        if (args.Cancelled)
-            return;
-
-        if (TryStartBonk(uid, args.User, args.Climber, component))
-            args.Cancelled = true;
     }
 
     private void OnAttemptClimb(EntityUid uid, BonkableComponent component, ref AttemptClimbEvent args)

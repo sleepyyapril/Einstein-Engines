@@ -56,7 +56,7 @@ public abstract partial class SharedToolSystem
         AdminLogger.Add(
             LogType.LatticeCut,
             LogImpact.Medium,
-            $"{ToPrettyString(args.User):player} used {ToPrettyString(ent)} to edit the tile at {coords}");
+            $"{ToPrettyString(args.User):player} used {ToPrettyString(ent)} to edit the tile at { coordinates }");
         args.Handled = true;
     }
 

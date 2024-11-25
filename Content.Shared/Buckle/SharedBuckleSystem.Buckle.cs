@@ -261,7 +261,6 @@ public abstract partial class SharedBuckleSystem
                 _popup.PopupClient(message, user);
             }
 
-            _popup.PopupEntity(message, user!.Value, user!.Value);
             return false;
         }
 

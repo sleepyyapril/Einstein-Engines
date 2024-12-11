@@ -3,6 +3,7 @@
   name: chat-emote-name-flip
   chatMessages: ["chat-emote-msg-flip"]
   chatTriggers:
+  - flips
   - does a flip
   event: !type:AnimationFlipEmoteEvent
 

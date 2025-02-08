@@ -27,6 +27,7 @@
     - id: BlueshieldAmmunitionBoxFilled
     - id: ClothingOuterHardsuitBlueshield
     - id: ClothingBlueshieldArmoredCoat
+    - id: MedkitCombatFilled
 
 - type: entity
   id: LockerMagistrateFilled

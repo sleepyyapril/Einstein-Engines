@@ -45,7 +45,9 @@ public sealed class ColorFlashEffectSystem : SharedColorFlashEffectSystem
             sprite.Color = component.Color;
         }
 
-        RemCompDeferred<ColorFlashEffectComponent>(uid);
+        // Floof - commented this out due to a race condition. It's quite complicated to explain;
+        // in short terms, don't do deferred component removal when dealing with concurrent tasks concerning the same component.
+        // RemCompDeferred<ColorFlashEffectComponent>(uid);
     }
 
     private Animation? GetDamageAnimation(EntityUid uid, Color color, SpriteComponent? sprite = null, float? animationLength = null)
@@ -101,12 +103,11 @@ public sealed class ColorFlashEffectSystem : SharedColorFlashEffectSystem
                 continue;
             }
 
-            // having to check lifestage because trycomp is special needs and may return a component which was shut down via RemCompDeferred.
-            // EnsureComp isn't, but we want to get the Color value stored in the component, and EnsureComp would overwrite it with the default value.
-            if (TryComp<ColorFlashEffectComponent>(ent, out var effect) && effect.LifeStage <= ComponentLifeStage.Running)
-            {
-                sprite.Color = effect.Color;
-            }
+            // Floof - commented out. This is handled by the animation complete event.
+            // if (TryComp<ColorFlashEffectComponent>(ent, out var effect))
+            // {
+            //     sprite.Color = effect.Color;
+            // }
 
 
             var animation = GetDamageAnimation(ent, color, sprite, ev.AnimationLength);

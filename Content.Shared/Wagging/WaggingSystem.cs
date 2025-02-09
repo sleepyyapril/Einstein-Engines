@@ -1,21 +1,20 @@
-﻿using Content.Server.Actions;
-using Content.Server.Humanoid;
+﻿using Content.Shared.Actions;
 using Content.Shared.Humanoid;
 using Content.Shared.Humanoid.Markings;
 using Content.Shared.Mobs;
 using Content.Shared.Toggleable;
-using Content.Shared.Wagging;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server.Wagging;
+
+namespace Content.Shared.Wagging;
 
 /// <summary>
 /// Adds an action to toggle wagging animation for tails markings that supporting this
 /// </summary>
 public sealed class WaggingSystem : EntitySystem
 {
-    [Dependency] private readonly ActionsSystem _actions = default!;
-    [Dependency] private readonly HumanoidAppearanceSystem _humanoidAppearance = default!;
+    [Dependency] private readonly SharedActionsSystem _actions = default!;
+    [Dependency] private readonly SharedHumanoidAppearanceSystem _humanoidAppearance = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
 
     public override void Initialize()
@@ -95,7 +94,7 @@ public sealed class WaggingSystem : EntitySystem
                 continue;
             }
 
-            _humanoidAppearance.SetMarkingId(uid, MarkingCategories.Tail, idx, newMarkingId,
+            _humanoidAppearance.set(uid, MarkingCategories.Tail, idx, newMarkingId,
                 humanoid: humanoid);
         }
 
